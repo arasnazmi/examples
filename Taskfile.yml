@@ -156,7 +156,7 @@ tasks:
       - |
         {{ .MAKE_CMD }} -C mcu libs >/dev/null
     preconditions:
-      - sh: ldconfig -p | grep -i libtinfo.so.5
+      - sh: /usr/sbin/ldconfig -p | grep -i libtinfo.so.5
         msg: |
           libtinfo5 library is needed, install it from your package manager. For Ubuntu:
             wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
