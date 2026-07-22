@@ -20,89 +20,35 @@
 
 #include "stdint.h"
 #include <stdbool.h>
-#define ICM20948_I2C_ADDRESS 0x69
-#define ICM20948_I2C_ADDRESS_1 0x68
 #define ICM20948_WHO_AM_I_VAL 0xEA
 #define ICM20948_MAG_ADDRESS 0x0C
-#define ICM20948_MAG_WHO_AM_I_1 0x4809
-#define ICM20948_MAG_WHO_AM_I_2 0x0948
+#define ICM20948_MAG_WIA_1_VAL 0x48 /*!< AK09916 company ID */
+#define ICM20948_MAG_WIA_2_VAL 0x09 /*!< AK09916 device ID */
 
 /* Registers ICM20948 USER BANK 0*/
 #define ICM20948_WHO_AM_I 0x00
 #define ICM20948_USER_CTRL 0x03
 #define ICM20948_LP_CONFIG 0x05
 #define ICM20948_PWR_MGMT_1 0x06
-#define ICM20948_PWR_MGMT_2 0x07
 #define ICM20948_INT_PIN_CFG 0x0F
-#define ICM20948_INT_ENABLE 0x10
-#define ICM20948_INT_ENABLE_1 0x11
-#define ICM20948_INT_ENABLE_2 0x12
-#define ICM20948_INT_ENABLE_3 0x13
 #define ICM20948_I2C_MST_STATUS 0x17
-#define ICM20948_INT_STATUS 0x19
-#define ICM20948_INT_STATUS_1 0x1A
-#define ICM20948_INT_STATUS_2 0x1B
-#define ICM20948_INT_STATUS_3 0x1C
-#define ICM20948_DELAY_TIME_H 0x28
-#define ICM20948_DELAY_TIME_L 0x29
 #define ICM20948_ACCEL_OUT 0x2D // accel data registers begin
 #define ICM20948_GYRO_OUT 0x33  // gyro data registers begin
-#define ICM20948_TEMP_OUT 0x39
-#define ICM20948_EXT_SLV_SENS_DATA_00 0x3B
-#define ICM20948_EXT_SLV_SENS_DATA_01 0x3C
-#define ICM20948_FIFO_EN_1 0x66
-#define ICM20948_FIFO_EN_2 0x67
-#define ICM20948_FIFO_RST 0x68
-#define ICM20948_FIFO_MODE 0x69
-#define ICM20948_FIFO_COUNT 0x70
-#define ICM20948_FIFO_R_W 0x72
-#define ICM20948_DATA_RDY_STATUS 0x74
-#define ICM20948_FIFO_CFG 0x76
-
-/* Registers ICM20948 USER BANK 1*/
-#define ICM20948_SELF_TEST_X_GYRO 0x02
-#define ICM20948_SELF_TEST_Y_GYRO 0x03
-#define ICM20948_SELF_TEST_Z_GYRO 0x04
-#define ICM20948_SELF_TEST_X_ACCEL 0x0E
-#define ICM20948_SELF_TEST_Y_ACCEL 0x0F
-#define ICM20948_SELF_TEST_Z_ACCEL 0x10
-#define ICM20948_XA_OFFS_H 0x14
-#define ICM20948_XA_OFFS_L 0x15
-#define ICM20948_YA_OFFS_H 0x17
-#define ICM20948_YA_OFFS_L 0x18
-#define ICM20948_ZA_OFFS_H 0x1A
-#define ICM20948_ZA_OFFS_L 0x1B
-#define ICM20948_TIMEBASE_CORR_PLL 0x28
 
 /* Registers ICM20948 USER BANK 2*/
 #define ICM20948_GYRO_SMPLRT_DIV 0x00
 #define ICM20948_GYRO_CONFIG_1 0x01
-#define ICM20948_GYRO_CONFIG_2 0x02
-#define ICM20948_XG_OFFS_USRH 0x03
-#define ICM20948_XG_OFFS_USRL 0x04
-#define ICM20948_YG_OFFS_USRH 0x05
-#define ICM20948_YG_OFFS_USRL 0x06
-#define ICM20948_ZG_OFFS_USRH 0x07
-#define ICM20948_ZG_OFFS_USRL 0x08
 #define ICM20948_ODR_ALIGN_EN 0x09
 #define ICM20948_ACCEL_SMPLRT_DIV_1 0x10
 #define ICM20948_ACCEL_SMPLRT_DIV_2 0x11
-#define ICM20948_ACCEL_INTEL_CTRL 0x12
-#define ICM20948_ACCEL_WOM_THR 0x13
 #define ICM20948_ACCEL_CONFIG 0x14
-#define ICM20948_ACCEL_CONFIG_2 0x15
-#define ICM20948_FSYNC_CONFIG 0x52
-#define ICM20948_TEMP_CONFIG 0x53
-#define ICM20948_MOD_CTRL_USR 0x54
 
 /* Registers ICM20948 USER BANK 3*/
 #define ICM20948_I2C_MST_ODR_CFG 0x00
 #define ICM20948_I2C_MST_CTRL 0x01
-#define ICM20948_I2C_MST_DELAY_CTRL 0x02
 #define ICM20948_I2C_SLV0_ADDR 0x03
 #define ICM20948_I2C_SLV0_REG 0x04
 #define ICM20948_I2C_SLV0_CTRL 0x05
-#define ICM20948_I2C_SLV0_DO 0x06
 #define ICM20948_I2C_SLV4_ADDR 0x13
 #define ICM20948_I2C_SLV4_REG 0x14
 #define ICM20948_I2C_SLV4_CTRL 0x15
@@ -113,37 +59,54 @@
 #define ICM20948_MAG_WIA_1 0x00 // Who I am, Company ID
 #define ICM20948_MAG_WIA_2 0x01 // Who I am, Device ID
 #define ICM20948_MAG_STATUS_1 0x10
-#define ICM20948_MAG_HXL 0x11
-#define ICM20948_MAG_HXH 0x12
-#define ICM20948_MAG_HYL 0x13
-#define ICM20948_MAG_HYH 0x14
-#define ICM20948_MAG_HZL 0x15
-#define ICM20948_MAG_HZH 0x16
-#define ICM20948_MAG_STATUS_2 0x18
 #define ICM20948_MAG_CNTL_2 0x31
 #define ICM20948_MAG_CNTL_3 0x32
 
-/* Register Bits */
+/* Register bits, grouped by the register they belong to */
+
+/* PWR_MGMT_1 */
 #define ICM20948_RESET 0x80
-#define ICM20948_I2C_MST_EN 0x20
 #define ICM20948_SLEEP 0x40
-#define ICM20948_LP_EN 0x20
-#define ICM20948_BYPASS_EN 0x02
-#define ICM20948_GYR_EN 0x07
-#define ICM20948_ACC_EN 0x38
-#define ICM20948_FIFO_EN 0x40
-#define ICM20948_INT1_ACTL 0x80
-#define ICM20948_INT_1_LATCH_EN 0x20
-#define ICM20948_ACTL_FSYNC 0x08
-#define ICM20948_INT_ANYRD_2CLEAR 0x10
-#define ICM20948_FSYNC_INT_MODE_EN 0x06
-#define ICM20948_I2C_SLVX_EN 0x80
-#define ICM20948_MAG_16_BIT 0x10
-#define ICM20948_MAG_OVF 0x08
-#define ICM20948_MAG_READ 0x80
+#define ICM20948_LP_EN 0x20 /*!< Low power mode; required for duty cycled operation */
+
+/* USER_CTRL */
+#define ICM20948_I2C_MST_EN 0x20  /*!< Enable the auxiliary I2C master */
+#define ICM20948_I2C_IF_DIS 0x10  /*!< Disable the primary I2C slave interface (SPI only) */
+#define ICM20948_I2C_MST_RST 0x02 /*!< Reset the auxiliary I2C master, self clearing */
+
+/* INT_PIN_CFG */
+#define ICM20948_BYPASS_EN 0x02 /*!< Tie the auxiliary bus to the host bus; blocks the master */
+
+/* LP_CONFIG */
+#define ICM20948_I2C_MST_CYCLE 0x40 /*!< Run the auxiliary master off its own ODR */
+
+/* I2C_SLVx_CTRL / I2C_SLV4_CTRL */
+#define ICM20948_I2C_SLVX_EN 0x80 /*!< Arm the channel */
+
+/* I2C_MST_STATUS */
+#define ICM20948_I2C_SLV4_DONE 0x40 /*!< SLV4 transaction completed */
+#define ICM20948_I2C_SLV4_NACK 0x10 /*!< SLV4 transaction was not acknowledged */
+
+/* AK09916 ST1 / ST2 */
+#define ICM20948_MAG_DRDY 0x01 /*!< ST1: a new measurement is ready */
+#define ICM20948_MAG_OVF 0x08  /*!< ST2: the sensor overflowed, sample is invalid */
+
+/* Auxiliary I2C address modifier */
+#define ICM20948_MAG_READ 0x80 /*!< OR into a slave address to make the transaction a read */
 
 /* Registers ICM20948 ALL BANKS */
 #define ICM20948_REG_BANK_SEL 0x7F
+
+/*!< AK09916 sensitivity, microtesla per LSB. Fixed; the part has no
+     sensitivity-adjustment ROM (unlike the older AK8963). */
+#define ICM20948_MAG_SENSITIVITY 0.15f
+
+/*!< Number of EXT_SLV_SENS_DATA bytes the magnetometer occupies:
+     ST1, HXL..HZH, TMPS, ST2. */
+#define ICM20948_MAG_DATA_LEN 9
+
+/*!< Base rate for the accel/gyro output data rate divider, Hz. */
+#define ICM20948_ODR_BASE_HZ 1125.0f
 
 typedef enum
 {
@@ -160,32 +123,6 @@ typedef enum
     GYRO_FS_1000DPS = 2, /*!< Gyroscope full scale range is +/- 1000 degree per second */
     GYRO_FS_2000DPS = 3, /*!< Gyroscope full scale range is +/- 2000 degree per second */
 } icm20948_gyro_fs_t;
-
-typedef enum
-{
-    INTERRUPT_PIN_ACTIVE_HIGH = 0, /*!< The icm20948 sets its INT pin HIGH on interrupt */
-    INTERRUPT_PIN_ACTIVE_LOW = 1   /*!< The icm20948 sets its INT pin LOW on interrupt */
-} icm20948_int_pin_active_level_t;
-
-typedef enum
-{
-    INTERRUPT_PIN_PUSH_PULL = 0, /*!< The icm20948 configures its INT pin as push-pull */
-    INTERRUPT_PIN_OPEN_DRAIN = 1 /*!< The icm20948 configures its INT pin as open drain*/
-} icm20948_int_pin_mode_t;
-
-typedef enum
-{
-    INTERRUPT_LATCH_50US = 0,         /*!< The icm20948 produces a 50 microsecond pulse on interrupt */
-    INTERRUPT_LATCH_UNTIL_CLEARED = 1 /*!< The icm20948 latches its INT pin to its active level, until
-                                         interrupt is cleared */
-} icm20948_int_latch_t;
-
-typedef enum
-{
-    INTERRUPT_CLEAR_ON_ANY_READ = 0,   /*!< INT_STATUS register bits are cleared on any register read */
-    INTERRUPT_CLEAR_ON_STATUS_READ = 1 /*!< INT_STATUS register bits are cleared
-                                          only by reading INT_STATUS value*/
-} icm20948_int_clear_t;
 
 typedef enum
 {
@@ -210,18 +147,6 @@ typedef enum
     ICM20948_MAG_CONT_MODE_100HZ = 0x08
 } icm20948_mag_mode_t;
 
-typedef enum
-{
-    ICM20948_MODE_I2C,
-    ICM20948_MODE_SPI
-} icm20948_mode_t;
-
-extern const uint8_t icm20948_DATA_RDY_INT_BIT;      /*!< DATA READY interrupt bit */
-extern const uint8_t icm20948_I2C_MASTER_INT_BIT;    /*!< I2C MASTER interrupt bit               */
-extern const uint8_t icm20948_FIFO_OVERFLOW_INT_BIT; /*!< FIFO Overflow interrupt bit */
-extern const uint8_t icm20948_MOT_DETECT_INT_BIT;    /*!< MOTION DETECTION interrupt bit         */
-extern const uint8_t icm20948_ALL_INTERRUPTS;        /*!< All interrupts supported by icm20948    */
-
 typedef struct
 {
     int16_t ax_raw;
@@ -230,66 +155,64 @@ typedef struct
     int16_t gx_raw;
     int16_t gy_raw;
     int16_t gz_raw;
-    float ax;
+    int16_t mx_raw; /*!< Magnetometer counts, already mapped into the accel/gyro frame */
+    int16_t my_raw;
+    int16_t mz_raw;
+    float ax; /*!< Acceleration, g */
     float ay;
     float az;
-    float gx;
+    float gx; /*!< Angular rate, degrees/second, bias-corrected */
     float gy;
     float gz;
-    float anglex;
-    float angley;
-    float anglez;
-    float temp;
-
+    float mx; /*!< Magnetic field, microtesla, in the accel/gyro frame */
+    float my;
+    float mz;
+    float gx_bias; /*!< Gyro zero-rate offset, degrees/second, from icm20948_calibrate_gyro */
+    float gy_bias;
+    float gz_bias;
+    float temp;      /*!< Die temperature, degrees Celsius */
+    bool mag_valid;  /*!< Last magnetometer sample was fresh and not overflowed */
+    bool gyro_calibrated;
 } icm20948_data_t;
 
 typedef void* icm20948_handle_t;
 
-typedef int (*icm20948_write_function_t)(icm20948_handle_t sensor, const uint8_t reg_start_addr,
-                                         const uint8_t data_buf);
-typedef int (*icm20948_read_function_t)(icm20948_handle_t sensor, const uint8_t reg_start_addr, uint8_t* const data_buf,
-                                        const uint8_t data_len);
-
-// Kalman structure
 typedef struct
 {
-    float Q_angle;
-    float Q_bias;
-    float R_measure;
-    float angle;
-    float bias;
-    float P[2][2];
-} Kalman_t;
+    icm20948_acce_fs_t acce_fs;   /*!< Accelerometer full scale range */
+    icm20948_gyro_fs_t gyro_fs;   /*!< Gyroscope full scale range */
+    icm20948_dlpf_t acce_dlpf;    /*!< Accelerometer low pass filter, ICM20948_DLPF_OFF to bypass */
+    icm20948_dlpf_t gyro_dlpf;    /*!< Gyroscope low pass filter, ICM20948_DLPF_OFF to bypass */
+    uint8_t sample_rate_div;      /*!< Output data rate = 1125 / (1 + sample_rate_div) Hz */
+    bool enable_mag;              /*!< Bring up the AK09916 on the auxiliary I2C bus */
+    icm20948_mag_mode_t mag_mode; /*!< Magnetometer measurement mode when enable_mag is set */
+    bool mag_required;            /*!< Treat a magnetometer bring-up failure as fatal */
+    bool mag_debug;               /*!< On failure, probe every auxiliary clocking arrangement */
+} icm20948_config_t;
 
 typedef struct
 {
     int fd;
     char* tag;
-    uint16_t dev_addr;
     int bank;
-    Kalman_t KalmanX;
-    Kalman_t KalmanY;
-    Kalman_t KalmanZ;
+    bool mag_enabled;
+    bool temp_valid;
+    uint8_t aux_status; /*!< Last I2C_MST_STATUS seen by an auxiliary transaction, for diagnostics */
     icm20948_acce_fs_t acce_fs;
     icm20948_gyro_fs_t gyro_fs;
     icm20948_data_t* data;
-    icm20948_mode_t mode;
-    icm20948_read_function_t icm20948_read;
-    icm20948_write_function_t icm20948_write;
 } icm20948_dev_t;
 
 /**
- * @brief Initialize the I2C bus and device
+ * @brief Fill a configuration with defaults suited to orientation tracking
  *
- * @param sensor object handle of icm20948
- * @param dev_path I2C device path
- * @param dev_addr I2C device address, 0x68 or 0x69
+ * 250 dps / 2 g full scale (the lowest ranges, so the least quantisation noise
+ * for a device that is not being thrown around), 51 Hz low pass filters, and a
+ * 102 Hz output data rate matched to the magnetometer's 100 Hz.
  *
- * @return
- *     - 0 Success
- *     - not 0 Fail
+ * @param config configuration to populate
  */
-int icm20948_i2c_bus_init(icm20948_handle_t sensor, const char* dev_path, uint8_t dev_addr);
+void icm20948_config_default(icm20948_config_t* config);
 
 /**
  * @brief Initialize the SPI bus and device
@@ -316,17 +239,21 @@ int icm20948_spi_bus_init(icm20948_handle_t sensor, const char* dev_path);
 icm20948_handle_t icm20948_create(icm20948_data_t* data, char* tag);
 
 /**
- * @brief Configure the sensor with the given full scale range
+ * @brief Reset and bring the sensor up according to the given configuration
+ *
+ * Performs the full bring-up: reset, wake, identity check, full scale ranges,
+ * low pass filters, output data rate, and -- if requested -- the auxiliary I2C
+ * master and the AK09916 magnetometer. Safe to call again to recover a device
+ * that has fallen off the bus.
  *
  * @param icm20948 object handle of icm20948
- * @param acce_fs accelerometer full scale range
- * @param gyro_fs gyroscope full scale range
+ * @param config configuration, or NULL for `icm20948_config_default`
  *
  * @return
  *     - 0 Success
  *     - not 0 Fail
  */
-int icm20948_configure(icm20948_handle_t icm20948, icm20948_acce_fs_t acce_fs, icm20948_gyro_fs_t gyro_fs);
+int icm20948_configure(icm20948_handle_t icm20948, const icm20948_config_t* config);
 
 /**
  * @brief Delete and release a sensor object
@@ -359,17 +286,6 @@ int icm20948_get_deviceid(icm20948_handle_t sensor, uint8_t* deviceid);
 int icm20948_wake_up(icm20948_handle_t sensor);
 
 /**
- * @brief Enter sleep mode
- *
- * @param sensor object handle of icm20948
- *
- * @return
- *     - 0 Success
- *     - not 0 Fail
- */
-int icm20948_sleep(icm20948_handle_t sensor);
-
-/**
  * @brief Set gyroscope full scale range
  *
  * @param sensor object handle of icm20948
@@ -380,16 +296,6 @@ int icm20948_sleep(icm20948_handle_t sensor);
  *     - not 0 Fail
  */
 int icm20948_set_gyro_fs(icm20948_handle_t sensor, icm20948_gyro_fs_t gyro_fs);
-
-/**
- * @brief Get gyroscope full scale range
- *
- * @param sensor object handle of icm20948
- * @param gyro_fs gyroscope full scale range
- *
- * @return gyro full scale range
- */
-icm20948_gyro_fs_t icm20948_get_gyro_fs(icm20948_handle_t sensor);
 
 /**
  * @brief Get gyroscope sensitivity
@@ -424,16 +330,6 @@ int icm20948_get_gyro(icm20948_handle_t sensor);
 int icm20948_set_acce_fs(icm20948_handle_t sensor, icm20948_acce_fs_t acce_fs);
 
 /**
- * @brief Get accelerometer full scale range
- *
- * @param sensor object handle of icm20948
- * @param acce_fs accelerometer full scale range
- *
- * @return accelerometer full scale range
- */
-icm20948_acce_fs_t icm20948_get_acce_fs(icm20948_handle_t sensor);
-
-/**
  * @brief Get accelerometer sensitivity
  *
  * @param sensor object handle of icm20948
@@ -443,7 +339,13 @@ icm20948_acce_fs_t icm20948_get_acce_fs(icm20948_handle_t sensor);
 float icm20948_get_acce_sensitivity(icm20948_handle_t sensor);
 
 /**
- * @brief Read accelerometer measurements
+ * @brief Read accelerometer, gyroscope, magnetometer and temperature at once
+ *
+ * All of these live in one contiguous register block, so a single bus
+ * transaction fetches the lot. Besides being much faster than four separate
+ * reads, it guarantees the samples describe the same instant -- which matters,
+ * because feeding an orientation filter accel and mag vectors captured
+ * milliseconds apart injects error during motion.
  *
  * @param sensor object handle of icm20948
  *
@@ -451,56 +353,59 @@ float icm20948_get_acce_sensitivity(icm20948_handle_t sensor);
  *     - 0 Success
  *     - not 0 Fail
  */
-int icm20948_get_acce(icm20948_handle_t sensor);
+int icm20948_get_agmt(icm20948_handle_t sensor);
 
 /**
- * @brief get euler angle
+ * @brief Bring up the auxiliary I2C master and the AK09916 magnetometer
+ *
+ * Called automatically by `icm20948_configure` when `enable_mag` is set.
+ * Afterwards the magnetometer streams into the EXT_SLV_SENS_DATA registers with
+ * no further bus traffic, so `icm20948_get_agmt` picks it up for free.
  *
  * @param sensor object handle of icm20948
- * @param dt time interval per sample
- *
- */
-void icm20948_get_angle(icm20948_handle_t sensor, float dt);
-
-/**
- * @brief filter the angle using kalman filter
- *
- * @param Kalman kalman filter object
- * @param newAngle euler angle
- * @param newRate real gyroscope value
- * @param dt time interval per sample
- *
- */
-float icm20948_kalman_get_angle(Kalman_t* Kalman, float newAngle, float newRate, float dt);
-
-/**
- * @brief Read the temperature value
- *
- * @param sensor object handle of icm20948
+ * @param mode measurement mode, typically ICM20948_MAG_CONT_MODE_100HZ
+ * @param debug probe every auxiliary clocking arrangement if bring-up fails
  *
  * @return
  *     - 0 Success
  *     - not 0 Fail
  */
-int icm20948_get_temp(icm20948_handle_t sensor);
+int icm20948_mag_init(icm20948_handle_t sensor, icm20948_mag_mode_t mode, bool debug);
 
 /**
- * @brief Read all sensor values
+ * @brief Report whether the magnetometer was brought up successfully
+ *
+ * False either because it was not requested or because bring-up failed. When
+ * false the magnetometer fields in icm20948_data_t stay zero and yaw has no
+ * absolute reference.
  *
  * @param sensor object handle of icm20948
- * @param dt time interval per sample
  *
+ * @return true if magnetometer samples are being streamed
  */
-void icm20948_get_all(icm20948_handle_t sensor, float dt);
+bool icm20948_mag_available(icm20948_handle_t sensor);
 
 /**
- * @brief Only get the angle of z-axis
+ * @brief Measure and store the gyroscope zero-rate offset
+ *
+ * The board must be completely still. Every gyroscope reads a small non-zero
+ * rate at rest, and integrating that offset is what turns into angle drift, so
+ * removing it is the single biggest improvement available to a gyro signal.
+ * Fails rather than storing a bad offset if motion is detected.
+ *
+ * The offset is temperature dependent, so it is measured at startup rather than
+ * stored to disk. Slow residual drift after this is handled by the AHRS
+ * filter's integral term.
  *
  * @param sensor object handle of icm20948
- * @param dt time interval per sample
+ * @param samples number of samples to average, 1000 is a good default
+ * @param interval_us delay between samples, matched to the output data rate
  *
+ * @return
+ *     - 0 Success
+ *     - not 0 Fail (bus error, or the board moved during the measurement)
  */
-void icm20948_get_anglez(icm20948_handle_t sensor, float dt);
+int icm20948_calibrate_gyro(icm20948_handle_t sensor, int samples, int interval_us);
 
 /**
  * @brief Reset the internal registers and restores the default settings
@@ -512,17 +417,6 @@ void icm20948_get_anglez(icm20948_handle_t sensor, float dt);
  *     - not 0 Fail
  */
 int icm20948_reset(icm20948_handle_t sensor);
-
-/**
- * @brief Waking the chip from sleep mode.
- *
- * @param sensor object handle of icm20948
- *
- * @return
- *     - 0 Success
- *     - not 0 Fail
- */
-int icm20948_wakeup(icm20948_handle_t sensor);
 
 /**
  * @brief Select USER BANK.
@@ -541,18 +435,18 @@ int icm20948_wakeup(icm20948_handle_t sensor);
 int icm20948_set_bank(icm20948_handle_t sensor, uint8_t bank);
 
 /**
- * @brief Enable low pass filter for gyroscope and accelerometer.
- * true:  enable low pass filter.
- * false: bypass low pass filter.
+ * @brief Set the accelerometer and gyroscope output data rate divider
+ *
+ * Output data rate = 1125 / (1 + div) Hz for both sensors.
  *
  * @param sensor object handle of icm20948
- * @param enable boolean variable whether to turn on or bypass the filter
+ * @param div    rate divider
  *
  * @return
  *     - 0 Success
  *     - not 0 Fail
  */
-int icm20948_enable_dlpf(icm20948_handle_t sensor, bool enable);
+int icm20948_set_sample_rate_div(icm20948_handle_t sensor, uint8_t div);
 
 /**
  * @brief Configure low pass filter for accelerometer
