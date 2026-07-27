@@ -22,19 +22,22 @@ from typing import Optional
 import gpiod
 
 
+LED_RED_BRIGHTNESS_PATH = "/sys/class/leds/RED/brightness"
+LED_GREEN_BRIGHTNESS_PATH = "/sys/class/leds/GREEN/brightness"
+
+
 class GpioController:
     def __init__(self):
         self.m_is_running: bool = False
-        self.m_chip1: Optional[gpiod.Chip] = None
+        self.m_chip: Optional[gpiod.Chip] = None
 
         self.m_output_request: Optional[gpiod.LineRequest] = None
         self.m_input_request: Optional[gpiod.LineRequest] = None
 
         self.m_line_gpio27: int = 33  # GPIO27 set to active-high output with low value
-        self.m_line_led_red: int = 11  # LED_RED output GPIO
-        self.m_line_led_green: int = 12  # LED_GREEN output GPIO
         self.m_line_gpio22: int = 41  # GPIO22 set to input with pull-up resistor enabled (normally high)
 
+        self.m_leds_initialized: bool = False
         self.m_prev_input_state: int = 0
         self.m_current_input_state: int = 0
 
@@ -43,23 +46,35 @@ class GpioController:
     def __del__(self):
         self.cleanup()
 
+    @staticmethod
+    def _set_led(brightness_path: str, value: int) -> int:
+        try:
+            with open(
+                brightness_path,
+                "w",
+                encoding="ascii",
+            ) as brightness_file:
+                brightness_file.write(f"{1 if value else 0}\n")
+        except OSError as error:
+            print(
+                f"Failed to write {brightness_path}: {error}",
+                file=sys.stderr,
+            )
+            return 1
+
+        return 0
+
     def initialize(self) -> int:
         try:
-            self.m_chip1 = gpiod.Chip("/dev/gpiochip1")
+            self.m_chip = gpiod.Chip("/dev/gpiochip2")
 
             output_config = {
                 self.m_line_gpio27: gpiod.LineSettings(
                     direction=gpiod.line.Direction.OUTPUT, output_value=gpiod.line.Value.INACTIVE
                 ),
-                self.m_line_led_red: gpiod.LineSettings(
-                    direction=gpiod.line.Direction.OUTPUT, active_low=True, output_value=gpiod.line.Value.INACTIVE
-                ),
-                self.m_line_led_green: gpiod.LineSettings(
-                    direction=gpiod.line.Direction.OUTPUT, output_value=gpiod.line.Value.INACTIVE
-                ),
             }
 
-            self.m_output_request = self.m_chip1.request_lines(consumer="gpio_example", config=output_config)
+            self.m_output_request = self.m_chip.request_lines(consumer="gpio_example", config=output_config)
 
             input_config = {
                 self.m_line_gpio22: gpiod.LineSettings(
@@ -67,11 +82,23 @@ class GpioController:
                 )
             }
 
-            self.m_input_request = self.m_chip1.request_lines(consumer="gpio_example", config=input_config)
+            self.m_input_request = self.m_chip.request_lines(consumer="gpio_example", config=input_config)
 
         except Exception as e:
             print(f"Failed to initialize GPIO: {e}", file=sys.stderr)
             return 1
+
+        if (
+            self._set_led(LED_RED_BRIGHTNESS_PATH, 0)
+            or self._set_led(LED_GREEN_BRIGHTNESS_PATH, 0)
+        ):
+            print(
+                "Run the example with permission to control the user LEDs.",
+                file=sys.stderr,
+            )
+            return 1
+
+        self.m_leds_initialized = True
 
         # Read initial state of input
         try:
@@ -85,10 +112,10 @@ class GpioController:
 
     def _print_configuration(self) -> None:
         print("GPIO configuration complete:")
-        print("- gpiochip1-33 (GPIO27)   : active-high output, value=0")
-        print("- gpiochip1-11 (RED LED)  : active-low output , value=0")
-        print("- gpiochip1-12 (GREEN LED): active-high output, value=0")
-        print("- gpiochip1-41 (GPIO22)  : pull-up input")
+        print("- gpiochip2-33 (GPIO27): active-high output, value=0")
+        print("- gpiochip2-41 (GPIO22): pull-up input")
+        print(f"- RED LED              : {LED_RED_BRIGHTNESS_PATH}")
+        print(f"- GREEN LED            : {LED_GREEN_BRIGHTNESS_PATH}")
         print()
         print("Waiting for input transitions on GPIO22...")
         print("Press Ctrl+C to exit")
@@ -105,18 +132,18 @@ class GpioController:
                     break
 
                 if self.m_prev_input_state == 1 and self.m_current_input_state == 0:
-                    values = {
-                        self.m_line_led_red: gpiod.line.Value.ACTIVE,
-                        self.m_line_led_green: gpiod.line.Value.INACTIVE,
-                    }
-                    self.m_output_request.set_values(values)
+                    if (
+                        self._set_led(LED_RED_BRIGHTNESS_PATH, 1)
+                        or self._set_led(LED_GREEN_BRIGHTNESS_PATH, 0)
+                    ):
+                        break
                     print("-> Set LED_RED=HIGH, LED_GREEN=LOW")
                 elif self.m_prev_input_state == 0 and self.m_current_input_state == 1:
-                    values = {
-                        self.m_line_led_red: gpiod.line.Value.INACTIVE,
-                        self.m_line_led_green: gpiod.line.Value.ACTIVE,
-                    }
-                    self.m_output_request.set_values(values)
+                    if (
+                        self._set_led(LED_RED_BRIGHTNESS_PATH, 0)
+                        or self._set_led(LED_GREEN_BRIGHTNESS_PATH, 1)
+                    ):
+                        break
                     print("-> Set LED_RED=LOW, LED_GREEN=HIGH")
 
                 self.m_prev_input_state = self.m_current_input_state
@@ -138,6 +165,11 @@ class GpioController:
 
         self._cleaned_up = True
 
+        if self.m_leds_initialized:
+            self._set_led(LED_RED_BRIGHTNESS_PATH, 0)
+            self._set_led(LED_GREEN_BRIGHTNESS_PATH, 0)
+            self.m_leds_initialized = False
+
         if self.m_output_request:
             self.m_output_request.release()
             self.m_output_request = None
@@ -145,3 +177,7 @@ class GpioController:
         if self.m_input_request:
             self.m_input_request.release()
             self.m_input_request = None
+
+        if self.m_chip:
+            self.m_chip.close()
+            self.m_chip = None

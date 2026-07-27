@@ -43,7 +43,10 @@ def main():
         print("Failed to initialize GPIO controller", file=sys.stderr)
         return 1
 
-    g_gpio_controller.run()
+    try:
+        g_gpio_controller.run()
+    finally:
+        g_gpio_controller.cleanup()
 
     return 0
 

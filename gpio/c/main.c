@@ -21,29 +21,59 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <threads.h>
 #include <unistd.h>
 
+#define LED_RED_BRIGHTNESS_PATH "/sys/class/leds/RED/brightness"
+#define LED_GREEN_BRIGHTNESS_PATH "/sys/class/leds/GREEN/brightness"
+
 // Global variables
-static struct gpiod_chip* g_chip1 = NULL;
-static struct gpiod_line* g_line_gpio27 = NULL;    // GPIO27 set to active-high output with low value
-static struct gpiod_line* g_line_led_red = NULL;   // LED_RED output GPIO
-static struct gpiod_line* g_line_led_green = NULL; // LED_GREEN output GPIO
-static struct gpiod_line* g_line_gpio22 = NULL;    // GPIO22 set to input with pull-up resistor enabled (normally high)
+static struct gpiod_chip* g_chip = NULL;
+static struct gpiod_line* g_line_gpio27 = NULL; // GPIO27 set to active-high output with low value
+static struct gpiod_line* g_line_gpio22 = NULL; // GPIO22 set to input with pull-up resistor enabled (normally high)
+static bool g_leds_initialized = false;
+
+static int set_led(const char* brightness_path, int value)
+{
+    FILE* brightness_file = fopen(brightness_path, "w");
+    if (!brightness_file)
+    {
+        fprintf(stderr, "Failed to open %s: %s\n", brightness_path, strerror(errno));
+        return -1;
+    }
+
+    if (fprintf(brightness_file, "%d\n", value ? 1 : 0) < 0)
+    {
+        fprintf(stderr, "Failed to write %s: %s\n", brightness_path, strerror(errno));
+        fclose(brightness_file);
+        return -1;
+    }
+
+    if (fclose(brightness_file) != 0)
+    {
+        fprintf(stderr, "Failed to close %s: %s\n", brightness_path, strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
 
 void cleanup(void)
 {
+    if (g_leds_initialized)
+    {
+        set_led(LED_RED_BRIGHTNESS_PATH, 0);
+        set_led(LED_GREEN_BRIGHTNESS_PATH, 0);
+    }
+
     if (g_line_gpio27)
         gpiod_line_release(g_line_gpio27);
-    if (g_line_led_red)
-        gpiod_line_release(g_line_led_red);
-    if (g_line_led_green)
-        gpiod_line_release(g_line_led_green);
     if (g_line_gpio22)
         gpiod_line_release(g_line_gpio22);
 
-    if (g_chip1)
-        gpiod_chip_close(g_chip1);
+    if (g_chip)
+        gpiod_chip_close(g_chip);
 }
 
 void signal_handler(__attribute__((unused)) int sig)
@@ -73,61 +103,52 @@ int main()
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
-    g_chip1 = gpiod_chip_open_by_name("gpiochip1");
-    if (!g_chip1)
+    g_chip = gpiod_chip_open_by_name("gpiochip2");
+    if (!g_chip)
     {
-        fprintf(stderr, "Failed to open gpiochip1\n");
+        fprintf(stderr, "Failed to open gpiochip2\n");
         return EXIT_FAILURE;
     }
 
-    g_line_gpio27 = gpiod_chip_get_line(g_chip1, 33);
-    g_line_led_red = gpiod_chip_get_line(g_chip1, 11);
-    g_line_led_green = gpiod_chip_get_line(g_chip1, 12);
-    g_line_gpio22 = gpiod_chip_get_line(g_chip1, 41);
+    g_line_gpio27 = gpiod_chip_get_line(g_chip, 33);
+    g_line_gpio22 = gpiod_chip_get_line(g_chip, 41);
 
-    if (!g_line_gpio27 || !g_line_led_red || !g_line_led_green || !g_line_gpio22)
+    if (!g_line_gpio27 || !g_line_gpio22)
     {
         fprintf(stderr, "Failed to get GPIO lines\n");
         return EXIT_FAILURE;
     }
 
-    // Configure gpiochip1-33 as active-high output with value 0
+    // Configure gpiochip2-33 as active-high output with value 0
     ret = gpiod_line_request_output(g_line_gpio27, "gpio_example", 0);
     if (ret < 0)
     {
-        fprintf(stderr, "Failed to configure line1-33 as output\n");
+        fprintf(stderr, "Failed to configure GPIO27 as output\n");
         return EXIT_FAILURE;
     }
 
-    // Configure gpiochip1-11 as active-low output with value 0
-    ret = gpiod_line_request_output_flags(g_line_led_red, "gpio_example", GPIOD_LINE_REQUEST_FLAG_ACTIVE_LOW, 0);
-    if (ret < 0)
-    {
-        fprintf(stderr, "Failed to configure line1-11 as active-low output\n");
-        return EXIT_FAILURE;
-    }
-
-    // Configure gpiochip1-12 as active-high output with value 0
-    ret = gpiod_line_request_output(g_line_led_green, "gpio_example", 0);
-    if (ret < 0)
-    {
-        fprintf(stderr, "Failed to configure line1-12 as output\n");
-        return EXIT_FAILURE;
-    }
-
-    // Configure gpiochip1-41 as pull-up input
+    // Configure gpiochip2-41 as pull-up input
     ret = gpiod_line_request_input_flags(g_line_gpio22, "gpio_example", GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
     if (ret < 0)
     {
-        fprintf(stderr, "Failed to configure line1-41 as input\n");
+        fprintf(stderr, "Failed to configure GPIO22 as input\n");
         return EXIT_FAILURE;
     }
 
+    if (set_led(LED_RED_BRIGHTNESS_PATH, 0) < 0 ||
+        set_led(LED_GREEN_BRIGHTNESS_PATH, 0) < 0)
+    {
+        fprintf(stderr, "Run the example with permission to control the user LEDs.\n");
+        return EXIT_FAILURE;
+    }
+
+    g_leds_initialized = true;
+
     printf("GPIO configuration complete:\n");
-    printf("- gpiochip1-33 (GPIO27)   : active-high output, value=0\n");
-    printf("- gpiochip1-11 (LED_RED)  : active-low output , value=0\n");
-    printf("- gpiochip1-12 (LED_GREEN): active-high output, value=0\n");
-    printf("- gpiochip1-41 (GPIO22)   : pull-up input\n");
+    printf("- gpiochip2-33 (GPIO27): active-high output, value=0\n");
+    printf("- gpiochip2-41 (GPIO22): pull-up input\n");
+    printf("- RED LED              : %s\n", LED_RED_BRIGHTNESS_PATH);
+    printf("- GREEN LED            : %s\n", LED_GREEN_BRIGHTNESS_PATH);
     printf("\nWaiting for input transitions on GPIO22...\n");
     printf("Press Ctrl+C to exit\n\n");
 
@@ -150,32 +171,18 @@ int main()
 
         if (prev_input_state == 1 && current_input_state == 0)
         {
-            ret = gpiod_line_set_value(g_line_led_red, 1);
-            if (ret < 0)
+            if (set_led(LED_RED_BRIGHTNESS_PATH, 1) < 0 ||
+                set_led(LED_GREEN_BRIGHTNESS_PATH, 0) < 0)
             {
-                fprintf(stderr, "Failed to set LED_RED\n");
-                break;
-            }
-            ret = gpiod_line_set_value(g_line_led_green, 0);
-            if (ret < 0)
-            {
-                fprintf(stderr, "Failed to set LED_GREEN\n");
                 break;
             }
             printf("-> Set LED_RED=HIGH, LED_GREEN=LOW\n");
         }
         else if (prev_input_state == 0 && current_input_state == 1)
         {
-            ret = gpiod_line_set_value(g_line_led_red, 0);
-            if (ret < 0)
+            if (set_led(LED_RED_BRIGHTNESS_PATH, 0) < 0 ||
+                set_led(LED_GREEN_BRIGHTNESS_PATH, 1) < 0)
             {
-                fprintf(stderr, "Failed to set LED_RED\n");
-                break;
-            }
-            ret = gpiod_line_set_value(g_line_led_green, 1);
-            if (ret < 0)
-            {
-                fprintf(stderr, "Failed to set LED_GREEN\n");
                 break;
             }
             printf("-> Set LED_RED=LOW, LED_GREEN=HIGH\n");

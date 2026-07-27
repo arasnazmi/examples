@@ -34,19 +34,19 @@ class GpioController
     void stop();
 
   private:
-    struct gpiod_chip* m_chip1 {};
+    struct gpiod_chip* m_chip {};
 
-    struct gpiod_line* m_line_gpio27 {};     // GPIO27 set to active-high output with low value
-    struct gpiod_line* m_line_led_red {};   // LED_RED output GPIO
-    struct gpiod_line* m_line_led_green {}; // LED_GREEN output GPIO
-    struct gpiod_line* m_line_gpio22 {};    // GPIO22 set to input with pull-up resistor enabled (normally high)
+    struct gpiod_line* m_line_gpio27 {}; // GPIO27 set to active-high output with low value
+    struct gpiod_line* m_line_gpio22 {}; // GPIO22 set to input with pull-up resistor enabled (normally high)
 
+    bool m_leds_initialized {};
     bool m_is_running {};
     int m_prev_input_state {};
     int m_current_input_state {};
 
     int configure_outputs();
     int configure_inputs();
+    static int set_led(const char* brightness_path, int value);
     void print_configuration();
     static void delay_ms(int ms);
 };
