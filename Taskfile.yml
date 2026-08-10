@@ -14,7 +14,7 @@ vars:
     sh: echo make -j $(nproc)
   URLS:
     map: {
-      toolchains: "https://github.com/t3gemstone/toolchains/releases/latest/download/t3gemstone-toolchains-${DISTRO_BASE}-${DISTRO_SUITE}.tar.gz",
+      toolchains: "https://github.com/t3gemstone/toolchains/releases/latest/download/t3gemstone-toolchains-${DISTRO_BASE}-${DISTRO_SUITE}-minimal.tar.gz",
       face_detection_yunet: "https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/face_detection_yunet/face_detection_yunet_2023mar_int8.onnx",
       face_detection_sample: "https://github.com/intel-iot-devkit/sample-videos/raw/refs/heads/master/face-demographics-walking.mp4",
       ti_j722s_rtos_sdk: "https://dr-download.ti.com/software-development/software-development-kit-sdk/MD-1bSfTnVt5d/10.01.00.04/ti-processor-sdk-rtos-j722s-evm-10_01_00_04.tar.gz",
